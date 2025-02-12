@@ -1,0 +1,11 @@
+{
+    "nro fc": "Nro Comprobante",
+    "fecha": "Fecha",
+    "Proveedor": "Drogueria",
+    "Cuenta": "Nro de Cuenta",
+    "cod barra": "Codigo de Barras",
+    "desc": "Descripcion",
+    "cantidad": "Cantidad",
+    "iva": "IVA (%)",
+    "costo": "Precio Unitario"
+}

@@ -1,0 +1,11 @@
+{
+    "numero comprobante": "Nro Comprobante",
+    "Fecha": "Fecha",
+    "Proveedor": "Drogueria",
+    "Cuenta": "Nro de Cuenta",
+    "CodBarra": "Codigo de Barras",
+    "Producto": "Descripcion",
+    "Cantidad": "Cantidad",
+    "IVA": "IVA (%)",
+    "Precio Unit.": "Precio Unitario"
+}
