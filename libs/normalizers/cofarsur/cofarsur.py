@@ -96,7 +96,7 @@ def process_cofarsur(df, provider, account):
             raise ValueError("❌ Error: No se pudo estandarizar el DataFrame.")
 
         print("✔️ DataFrame estandarizado correctamente.")
-
+        
         return df_standard
 
     except Exception as e:

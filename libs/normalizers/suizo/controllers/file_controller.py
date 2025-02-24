@@ -29,9 +29,11 @@ def format_column(df, column, new_col_name):
 
     return df
 
+import pandas as pd
+
 def format_fecha_comprobante(df, column, new_col_name):
     """
-    Transforma fechas en formato '4022025' a 'DD/MM/YYYY'.
+    Transforma fechas en formato '4022025' o '18022025' a formato fecha (datetime).
 
     Parámetros:
         df (pd.DataFrame): DataFrame que contiene los datos.
@@ -39,24 +41,34 @@ def format_fecha_comprobante(df, column, new_col_name):
         new_col_name (str): Nombre de la nueva columna con la fecha formateada.
 
     Retorna:
-        pd.DataFrame: DataFrame con la nueva columna añadida.
+        pd.DataFrame: DataFrame con la nueva columna añadida en formato datetime.
     """
     if column not in df.columns:
         raise ValueError(f"❌ La columna '{column}' no existe en el DataFrame.")
 
     def transform_fecha(value):
-        """Convierte '4022025' en '04/02/2025'."""
+        """Convierte la fecha a cadena en formato 'DD/MM/YYYY' dependiendo de su longitud."""
         value = str(value).strip()
         if len(value) == 7:
-            dia = value[0]  # Primer dígito (día)
-            mes = value[1:3]  # Segundo y tercer dígito (mes)
-            año = value[3:]  # Resto es el año
-            return f"{dia.zfill(2)}/{mes}/{año}"
-        return value  # Si no cumple la condición, deja el valor igual
+            # Por ejemplo: '4022025' -> '04/02/2025'
+            dia = value[0].zfill(2)      # Primer dígito, rellenado a dos dígitos
+            mes = value[1:3]             # Segundo y tercer dígito (mes)
+            año = value[3:]              # Resto es el año
+        elif len(value) == 8:
+            # Por ejemplo: '18022025' -> '18/02/2025'
+            dia = value[0:2]             # Primeros dos dígitos (día)
+            mes = value[2:4]             # Dígitos 3 y 4 (mes)
+            año = value[4:]              # Últimos cuatro dígitos (año)
+        else:
+            raise ValueError(f"Formato de fecha desconocido: {value}")
+        return f"{dia}/{mes}/{año}"
 
-    df[new_col_name] = df[column].apply(transform_fecha)
-
+    # Aplica la transformación y convierte la cadena resultante a datetime
+    fechas_formateadas = df[column].apply(transform_fecha)
+    df[new_col_name] = pd.to_datetime(fechas_formateadas, format='%d/%m/%Y', errors='raise')
+    
     return df
+
 
 
 def fill_dates_from_header(df):

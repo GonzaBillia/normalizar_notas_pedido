@@ -134,14 +134,13 @@ def format_and_propagate_date(df):
     
     def transform_date(value):
         """Convierte '20250207' (o '20250207.0') en '07/02/2025'."""
-        value = str(value).strip()
-        # Eliminar .0 si está presente
-        if value.endswith(".0"):
-            value = value[:-2]
-        if len(value) == 8 and value.isdigit():
-            año, mes, dia = value[:4], value[4:6], value[6:]
+        try:
+            value_int = int(float(value))
+            value_str = str(value_int).zfill(8)
+            año, mes, dia = value_str[:4], value_str[4:6], value_str[6:]
             return f"{dia}/{mes}/{año}"
-        return ""
+        except Exception as e:
+            return ""
 
     # Paso 1: Asegurarse de que todas las filas tengan la misma cantidad de columnas
     max_cols = df.shape[1]
@@ -182,11 +181,14 @@ def format_and_propagate_date(df):
             # Propagar la última fecha encontrada en filas tipo 'C'
             df.at[index, "Fecha Formateada"] = last_date
 
+    df["Fecha Formateada"] = pd.to_datetime(df["Fecha Formateada"], format="%d/%m/%Y", errors="coerce")
+
     # Depuración: Mostrar resultados parciales
     print("📆 DataFrame después de procesar fechas:")
     print(df[["col_0", "col_14", "Fecha Formateada"]].head(10))
 
     return df
+
 
 
 def exclude_rows_with_values(df, column_index, values_to_exclude):

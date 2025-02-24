@@ -118,11 +118,16 @@ def merge_and_save(files_data, output_path):
         if actual_rows != total_expected_rows:
             print(f"Advertencia: Se esperaban {total_expected_rows} filas, pero se obtuvieron {actual_rows}.")
 
+        # Asegurarse de que la columna "Fecha" sea de tipo datetime
+        if "Fecha" in final_df.columns:
+            final_df["Fecha"] = pd.to_datetime(final_df["Fecha"], errors='coerce')
+
         # Guardar el DataFrame concatenado en Excel.
         final_df.to_excel(output_path, index=False, sheet_name="Datos Normalizados")
         print(f"✅ Archivo guardado exitosamente en {output_path}")
     except Exception as e:
         print(f"❌ Error al guardar el archivo: {str(e)}")
+
 
 
 def load_column_template_json(mapping):
@@ -166,7 +171,7 @@ def standardize_dataframe(df, column_mapping, final_columns):
 
     # 🛠️ Formatear "Fecha" a dd/mm/yyyy (eliminar la hora si existe)
     if "Fecha" in df.columns:
-        df["Fecha"] = pd.to_datetime(df["Fecha"], errors='coerce').dt.strftime("%d/%m/%Y")
+        df["Fecha"] = pd.to_datetime(df["Fecha"], errors='coerce')
 
 
     return df
@@ -181,6 +186,7 @@ def style_excel_file(file_path):
     - Intercalado de colores en filas (blanco y celeste claro)
     - Bordes finos verticales entre columnas
     - Formato de código de barras como texto para evitar notación científica
+    - Formato de celda "Fecha" para que se muestre como DD/MM/YYYY
     """
     try:
         # Cargar el archivo Excel
@@ -193,18 +199,22 @@ def style_excel_file(file_path):
         row_fill = PatternFill(start_color="F2F8FC", end_color="F2F8FC", fill_type="solid")  # Fondo alterno para filas
         border_style = Side(border_style="thin", color="000000")  # Bordes finos
 
-        # Aplicar estilos a las cabeceras
-        for cell in ws[1]:  # Primera fila (cabecera)
+        # Aplicar estilos a las cabeceras y determinar la posición de la columna "Fecha"
+        fecha_col_index = None
+        barcode_col_index = None
+        for col_idx, cell in enumerate(ws[1], start=1):
+            # Aplicar estilo a la cabecera
             cell.fill = header_fill
             cell.font = header_font
             cell.alignment = Alignment(horizontal="center", vertical="center")
-
-        # Identificar el índice de la columna "Codigo de Barras"
-        barcode_col_index = None
-        for col_idx, cell in enumerate(ws[1], start=1):
-            if cell.value and str(cell.value).lower() == "codigo de barras":
-                barcode_col_index = col_idx
-                break
+            
+            # Identificar columna "Codigo de Barras" y "Fecha"
+            if cell.value:
+                header_value = str(cell.value).strip().lower()
+                if header_value == "codigo de barras":
+                    barcode_col_index = col_idx
+                if header_value == "fecha":
+                    fecha_col_index = col_idx
 
         # Aplicar estilos a las filas (intercalado de colores y bordes)
         for row_idx, row in enumerate(ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=1, max_col=ws.max_column), start=2):
@@ -216,6 +226,13 @@ def style_excel_file(file_path):
                 # Aplicar formato de texto al código de barras
                 if barcode_col_index and cell.column == barcode_col_index:
                     cell.number_format = "@"  # Texto
+
+        # Si se detectó la columna "Fecha", aplicar formato de fecha en esa columna
+        if fecha_col_index:
+            # Recorrer todas las celdas de la columna "Fecha"
+            for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=fecha_col_index, max_col=fecha_col_index):
+                for cell in row:
+                    cell.number_format = "DD/MM/YYYY"
 
         # Ajustar ancho de columnas automáticamente
         for col in ws.columns:
@@ -230,7 +247,7 @@ def style_excel_file(file_path):
         wb.save(file_path)
         print(f"🎨 Estilos aplicados correctamente al archivo: {file_path}")
 
-        # 🛠️ Abrir la carpeta de destino automáticamente
+        # 🛠️ Abrir la carpeta de destino automáticamente (asegúrate de tener implementada la función open_folder)
         folder_path = os.path.dirname(file_path)
         open_folder(folder_path)
 
