@@ -66,27 +66,49 @@ def read_file(filepath):
 def format_fourth_column(df):
     """
     Modifica la cuarta columna del DataFrame en las filas donde la primera columna sea 'D'.
-    El formato de la cuarta columna se transforma de '0307A04304132' a 'FC A 0307-04304132'.
-
+    Transforma el formato de la cuarta columna desde '0307A04304132' a:
+      '<prefijo> <letra> <primer segmento>-<segundo segmento>'
+    
+    Donde:
+      - El prefijo se obtiene de la tercera columna:
+          'F' -> 'FC'
+          'C' -> 'NC'
+      - La 'letra' es el carácter en la posición 5 del string original (índice 4)
+      - El 'primer segmento' corresponde a los primeros 4 dígitos
+      - El 'segundo segmento' corresponde a los dígitos posteriores a la letra
+    
     Parámetros:
         df (pd.DataFrame): DataFrame sin headers.
-
+    
     Retorna:
         pd.DataFrame: DataFrame con la cuarta columna modificada donde corresponda.
     """
-    def transform_value(value):
-        """Convierte '0307A04304132' en 'FC A 0307-04304132'."""
+    
+    def transform_value(value, comprobante_type):
+        """Convierte '0307A04304132' en '<prefijo> A 0307-04304132' usando comprobante_type para el prefijo."""
         value = str(value).strip()
         if len(value) >= 12:
-            tipo_factura = value[4]  # Extraer la letra (tipo de factura)
-            parte1 = value[:4]  # Primer segmento numérico
-            parte2 = value[5:]  # Segundo segmento numérico (después de la letra)
-            return f"FC {tipo_factura} {parte1}-{parte2}"
-        return value  # Si no cumple la condición, deja el valor igual
+            # Extraer la letra (en posición 4, índice 4)
+            tipo_factura = value[4]
+            # Primer segmento: primeros 4 dígitos
+            parte1 = value[:4]
+            # Segundo segmento: dígitos después de la letra
+            parte2 = value[5:]
+            # Determinar el prefijo basándonos en el valor de la tercera columna:
+            # Se asume que 'F' corresponde a "FC" y 'C' a "NC"; si no coincide, se usa "FC" por defecto
+            prefix = "FC" if comprobante_type.upper() == "F" else "NC" if comprobante_type.upper() == "C" else "FC"
+            return f"{prefix} {tipo_factura} {parte1}-{parte2}"
+        return value
 
-    # Aplicar transformación solo en las filas donde la primera columna sea 'D'
-    df.iloc[:, 3] = df.apply(lambda row: transform_value(row.iloc[3]) if row.iloc[0] == "D" else row.iloc[3], axis=1)
-
+    df = df.copy()
+    # Se aplica la transformación en las filas donde la primera columna sea 'D'
+    # Se accede a:
+    #   row.iloc[0] -> Primera columna
+    #   row.iloc[2] -> Tercera columna (para determinar el prefijo)
+    #   row.iloc[3] -> Cuarta columna (la que se va a transformar)
+    df.iloc[:, 3] = df.apply(lambda row: transform_value(row.iloc[3], row.iloc[2]) 
+                                  if row.iloc[0] == "D" 
+                                  else row.iloc[3], axis=1)
     return df
 
 def adjust_price_and_iva(df):

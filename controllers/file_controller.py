@@ -171,7 +171,7 @@ def standardize_dataframe(df, column_mapping, final_columns):
 
     # 🛠️ Formatear "Fecha" a dd/mm/yyyy (eliminar la hora si existe)
     if "Fecha" in df.columns:
-        df["Fecha"] = pd.to_datetime(df["Fecha"], errors='coerce')
+        df["Fecha"] = pd.to_datetime(df["Fecha"],  format='%d/%m/%Y', errors='coerce')
 
 
     return df

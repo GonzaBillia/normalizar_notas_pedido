@@ -1,28 +1,38 @@
 import pandas as pd
     
-def combine_columns(df, letra_col, numero_col, new_col_name="NUMERO FACTURA", separator=" "):
+def combine_columns(df, letra_col, numero_col, tipo_col="TIPO", new_col_name="NUMERO FACTURA", separator=" "):
     """
-    Une la columna de letra y número formateado, agregando 'FC ' al inicio y formateando el número.
+    Combina el prefijo (tipo), la letra y el número formateado para generar el número de factura.
 
     Parámetros:
         df (pd.DataFrame): DataFrame con las columnas a combinar.
         letra_col (str): Nombre de la columna que contiene la letra de la factura.
         numero_col (str): Nombre de la columna que contiene el número formateado.
+        tipo_col (str): Nombre de la columna que contiene el tipo (por ejemplo, "FC" o "NC").
+                        Si la columna no existe, se usará por defecto "FC".
         new_col_name (str): Nombre de la nueva columna combinada. (Por defecto 'NUMERO FACTURA')
-        separator (str): Separador entre los valores (por defecto " ").
+        separator (str): Separador entre los valores (por defecto un espacio " ").
 
     Retorna:
         pd.DataFrame: DataFrame con la nueva columna añadida.
     """
+    # Verificamos que existan las columnas letra y número formateado
     if letra_col not in df.columns or numero_col not in df.columns:
         raise ValueError(f"❌ Las columnas '{letra_col}' y/o '{numero_col}' no existen en el DataFrame.")
 
     df = df.copy()
 
-    # Formateamos el número de factura para que tenga el formato esperado 0001-00000001
-    df[new_col_name] = "FC" + separator + df[letra_col].astype(str) + separator + df[numero_col].astype(str)
+    # Definimos el prefijo: si la columna tipo_col existe, se toma su valor, de lo contrario se usa "FC"
+    if tipo_col in df.columns:
+        prefix = df[tipo_col].astype(str)
+    else:
+        prefix = "FC"
+
+    # Se forma la nueva columna combinando el prefijo, la letra y el número formateado con el separador
+    df[new_col_name] = prefix + separator + df[letra_col].astype(str) + separator + df[numero_col].astype(str)
 
     return df
+
 
 
 def fill_dates_from_header(df):
