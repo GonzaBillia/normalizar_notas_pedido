@@ -111,13 +111,13 @@ def format_quantity_column(df, column):
         raise ValueError(f"❌ La columna '{column}' no existe en el DataFrame.")
 
     def convert_quantity_value(value):
-        s = str(value).strip()
+        s = str(value).strip().replace(',', '.')  # reemplaza coma por punto si vienen con separador europeo
         if '-' in s:
-            # Se asume que el guion indica un número negativo, se elimina el guion y se convierte a entero.
             s_numerico = s.replace('-', '')
-            return -int(s_numerico)
+            return -int(float(s_numerico))
         else:
-            return int(s)
+            return int(float(s))
+
 
     df = df.copy()
     df[column] = df[column].apply(convert_quantity_value)
